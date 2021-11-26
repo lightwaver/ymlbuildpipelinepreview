@@ -147,9 +147,11 @@ export function activate(context: vscode.ExtensionContext) {
 							}
 						});
 					}
+				} else {
+					vscode.window.showErrorMessage('validation showed an Error: ' + mappedError.statusCode + "\r\n" + mappedError.message);
 				}
 			} else {
-				vscode.window.showErrorMessage('validation showed an Error: ' + mappedError.statusCode, mappedError.message);
+				vscode.window.showErrorMessage('validation showed an Error: ' + mappedError.statusCode + "\r\n" + mappedError.message);
 			}
 		}
 	});
