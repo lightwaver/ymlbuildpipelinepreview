@@ -14,12 +14,10 @@
     ],
     "main": "./out/extension.js",
     "contributes": {
-        "commands": [
-            {
-                "command": "ymlbuildpipelinepreview.testPipeline",
-                "title": "test YAML Pipeline in Azure Pipelines"
-            }
-        ],
+        "commands": [{
+            "command": "ymlbuildpipelinepreview.testPipeline",
+            "title": "test YAML Pipeline in Azure Pipelines"
+        }],
         "configuration": {
             "title": "Azure Devops YAML Build Preview",
             "properties": {
@@ -32,6 +30,11 @@
                     "type": "number",
                     "default": false,
                     "description": "PipelineID to use to post the yml"
+                },
+                "ymlbuildpipelinepreview.azureDevOpsUrl": {
+                    "type": "string",
+                    "default": false,
+                    "description": "Url of the Azure DevOps tenant you are using including the path to the Project. (e.g. https://dev.azure.com/{Organisation}/{Project} or https://{Organisation}.visualstudio.com/DefaultCollection/{Project})"
                 }
             }
         }

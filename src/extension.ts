@@ -1,9 +1,11 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
-import { URL } from 'url';
+import { Url, URL } from 'url';
 import * as vscode from 'vscode';
 import { GitExtension } from './typings/git';
 import * as azdev from "azure-devops-node-api";
+import { url } from 'inspector';
+import { parse } from 'path';
 //import GitExtension from './git';
 
 // this method is called when your extension is activated
@@ -32,84 +34,49 @@ export function activate(context: vscode.ExtensionContext) {
 			return;
 		}
 
+		let devOpsUrl: URL | undefined;
+		const devOpsUrlStr = getSetting("azureDevOpsUrl", "");
+		if (devOpsUrlStr) { devOpsUrl = new URL(devOpsUrlStr); }
 
-		const gitExtension = vscode.extensions?.getExtension<GitExtension>('vscode.git')?.exports;
-		if (!gitExtension) {
-			vscode.window.showErrorMessage('sorry not able to determine the git path ... expecting it to be in a azure devops git...');
-			return;
-		}
-		const git = gitExtension.getAPI(1);
-
-		if (!vscode.window.activeTextEditor?.document.uri) {
-			vscode.window.showErrorMessage('sorry not able to determine the document uri ... expecting it to be in a azure devops git...');
-			return;
+		if (!devOpsUrl) {
+			devOpsUrl =  getDevOpsUrlFromRepo();
 		}
 
-		const repository = git.getRepository(vscode.window.activeTextEditor?.document.uri);
-
-		if (!repository) {
-			vscode.window.showErrorMessage('sorry not able to determine the repository ... expecting it to be in a azure devops git...');
-			return;
-		}
-
-		const { remotes, HEAD } = repository.state;
-
-		let repoUrl: URL | null = null;
-		for (const remote of remotes) {
-			const { fetchUrl } = remote;
-			vscode.window.showInformationMessage("targetting gitrepo: " + fetchUrl);
-			if (fetchUrl) { repoUrl = new URL(fetchUrl); }
-		}
-		if (!repoUrl) {
-			vscode.window.showErrorMessage('sorry not able to determine the remote url\r\n pls connect to azure devops git repo...');
-			return;
+		if (!devOpsUrl) {
+			let url = await vscode.window.showInputBox({
+				placeHolder: "DevOpsUrl",
+				title: "Url of the Azure DevOps tenant you are using including the path to the Project. (e.g. https://dev.azure.com/{Organisation}/{Project} or https://{Organisation}.visualstudio.com/DefaultCollection/{Project})",
+			});
+			if (!url) {
+				vscode.window.showErrorMessage('😕 please provide an Azure DevOpsUrl to connect to it! aborting..');
+				return;
+			}
+			devOpsUrl = new URL(url);
 		}
 
 		let organisation: string = "";
 		let project: string = "";
-		if (repoUrl.hostname.endsWith("visualstudio.com")) {
-			organisation = repoUrl.hostname.substr(0, repoUrl.hostname.indexOf("."));
-			project = repoUrl.pathname.substr(1, repoUrl.pathname.indexOf("/", 1) - 1);
-			if (project === "DefaultCollection") { project = repoUrl.pathname.substr(19, repoUrl.pathname.indexOf("/", 19) - 19); }
+
+		let prjConfig = parseDevOpsUrl(devOpsUrl);
+		if (prjConfig) {
+			organisation = prjConfig.organisation;
+			project = prjConfig.project;
 		}
 
 		console.log(`using project ${project} in organisation ${organisation}`);
 
-		var devopsUri = repoUrl;
-
-		let options: vscode.InputBoxOptions = {
-			title: `Please enter Personal for the DevOpsAPI in ${organisation} -> ${project}`,
-			prompt: "PAT: ",
-			placeHolder: "(placeholder)"
-		};
-
-		let apiPAT = vscode.workspace.getConfiguration("ymlbuildpipelinepreview").get<string>("devOpsApiPAT", "");
+		let apiPAT = await getSettingAndPrompt("devOpsApiPAT", `Please enter Personal Access Token for the DevOpsAPI in ${organisation} -> ${project}`, "PAT:", "Personal Access Token");
 		if (!apiPAT) {
-			const value = await vscode.window.showInputBox(options);
-			if (!value) {
-				vscode.window.showErrorMessage('no PAT no build 😥 - aborting...');
-				return;
-			}
-			apiPAT = value;
-			vscode.workspace.getConfiguration("ymlbuildpipelinepreview").update("pipelineID", apiPAT);
+			vscode.window.showErrorMessage('no PAT no build 😥 - aborting...');
+			return;
 		}
 
-		options = {
-			title: `Please enter Pipeline ID`,
-			prompt: "PAT: ",
-			placeHolder: "(placeholder)"
-		};
-		let pipelineId = vscode.workspace.getConfiguration("ymlbuildpipelinepreview").get<string>("pipelineID", "");
+		let pipelineId = await getSettingAndPrompt("pipelineID", `Please enter a valid PipelineID`, "Id:", "Pipeline ID");
 		if (!pipelineId) {
-			const value = await vscode.window.showInputBox(options);
-			if (!value) {
-				vscode.window.showErrorMessage('no Pipeline ID no build 😥 - aborting...');
-				return;
-			}
-			pipelineId = value;
-			vscode.workspace.getConfiguration("ymlbuildpipelinepreview").update("pipelineID", apiPAT);
+			vscode.window.showErrorMessage('no Pipeline ID no build 😥 - aborting...');
+			return;
 		}
-		//  https://developercommunity.visualstudio.com/t/ability-to-test-yaml-builds-locally/366517
+		// https://developercommunity.visualstudio.com/t/ability-to-test-yaml-builds-locally/366517
 		// https://code.visualstudio.com/api/get-started/extension-anatomy
 		var apiUrl = `https://dev.azure.com/${organisation}/${project}/_apis/pipelines/${pipelineId}/runs?api-version=5.1-preview`;
 		/*
@@ -122,6 +89,12 @@ export function activate(context: vscode.ExtensionContext) {
 
 
 		var yml = vscode.window.activeTextEditor?.document.getText();
+
+		if (!yml) {
+			vscode.window.showErrorMessage('😣 i was not able to fetch yml data from th editor');
+			return;
+		}
+
 		const postData: PipelinesPostData = {
 			// eslint-disable-next-line @typescript-eslint/naming-convention
 			PreviewRun: true,
@@ -135,28 +108,108 @@ export function activate(context: vscode.ExtensionContext) {
 
 		let api = new azdev.WebApi(serverUrl, authHandler, undefined);
 		try {
-		const response = await api.rest.create<PostResult>(apiUrl, postData, undefined);
-		if (response.statusCode === 200) {
-			if (response.result?.id?? 0 <= 0) {
-				vscode.window.showInformationMessage('👌 invoked api with success - Syntax seems to be ok');
-				return;
-			}
-			vscode.window.showErrorMessage('👌 invoked api with success opening build');
+			const response = await api.rest.create<PostResult>(apiUrl, postData, undefined);
+			if (response.statusCode === 200) {
+				if (response.result?.id ?? 0 <= 0) {
+					vscode.window.showInformationMessage('👌 invoked api with success - Syntax seems to be ok');
+					return;
+				}
+				vscode.window.showErrorMessage('👌 invoked api with success opening build');
 
-			var buildRunUrl = `https://dev.azure.com/${organisation}/${project}/_build/results?buildId=${response.result?.id}`;
-			vscode.env.openExternal(vscode.Uri.parse(buildRunUrl));
-		} else {
-			vscode.window.showErrorMessage('invoked api with an error: ' + response.statusCode);
+				var buildRunUrl = `https://dev.azure.com/${organisation}/${project}/_build/results?buildId=${response.result?.id}`;
+				vscode.env.openExternal(vscode.Uri.parse(buildRunUrl));
+			} else {
+				vscode.window.showErrorMessage('invoked api with an error: ' + response.statusCode);
+			}
+		} catch (error: any) {
+			const mappedError: PostResultError = error;
+
+			vscode.window.showErrorMessage('invoked api with an error: ' + mappedError.statusCode, mappedError.message);
+
+			if (mappedError.statusCode === 400) {
+
+			}
+			vscode.window.showErrorMessage('invoked api with an error: ' + mappedError.statusCode, mappedError.message);
 		}
-	} catch(error: any) {
-		vscode.window.showErrorMessage('invoked api with an error: ' + error.response.statusCode);
-	}
-});
+	});
 
 	context.subscriptions.push(disposable);
 }
 
+function getDevOpsUrlFromRepo() {
 
+	const gitExtension = vscode.extensions?.getExtension<GitExtension>('vscode.git')?.exports;
+	if (!gitExtension) {
+		vscode.window.showErrorMessage('sorry not able to determine the git path ... expecting it to be in a azure devops git...');
+		return;
+	}
+	const git = gitExtension.getAPI(1);
+
+	if (!vscode.window.activeTextEditor?.document.uri) {
+		vscode.window.showErrorMessage('sorry not able to determine the document uri ... expecting it to be in a azure devops git...');
+		return;
+	}
+
+	const repository = git.getRepository(vscode.window.activeTextEditor?.document.uri);
+
+	if (!repository) {
+		vscode.window.showErrorMessage('sorry not able to determine the repository ... expecting it to be in a azure devops git...');
+		return;
+	}
+
+	const { remotes, HEAD } = repository.state;
+
+	let repoUrl: URL | null = null;
+	for (const remote of remotes) {
+		const { fetchUrl } = remote;
+		vscode.window.showInformationMessage("targetting gitrepo: " + fetchUrl);
+		if (fetchUrl) { repoUrl = new URL(fetchUrl); }
+	}
+	if (!repoUrl) {
+		vscode.window.showErrorMessage('sorry not able to determine the remote url\r\n pls connect to azure devops git repo...');
+		return;
+	}
+
+	return repoUrl;
+}
+
+function parseDevOpsUrl(repoUrl: URL) {
+	let organisation: string = "";
+	let project: string = "";
+	if (repoUrl.hostname === "dev.azure.com") {
+		organisation = repoUrl.username;
+		project = repoUrl.pathname.substr(repoUrl.pathname.lastIndexOf("/") + 1);
+	}
+	else if (repoUrl.hostname.endsWith("visualstudio.com")) {
+		organisation = repoUrl.hostname.substr(0, repoUrl.hostname.indexOf("."));
+		project = repoUrl.pathname.substr(1, repoUrl.pathname.indexOf("/", 1) - 1);
+		if (project === "DefaultCollection") { project = repoUrl.pathname.substr(19, repoUrl.pathname.indexOf("/", 19) - 19); }
+	}
+
+	return { organisation, project };
+}
+
+async function getSettingAndPrompt(name: string, title: string, prompt: string, placeHolder: string, defaultValue: string = "") {
+	let options: vscode.InputBoxOptions = {
+		title,
+		prompt,
+		placeHolder
+	};
+
+	let settingValue = getSetting(name, defaultValue);
+	if (!settingValue) {
+		const value = await vscode.window.showInputBox(options);
+		if (!value) { return; }
+		settingValue = value;
+		vscode.workspace.getConfiguration("ymlbuildpipelinepreview").update(name, settingValue);
+	}
+	return settingValue;
+}
+
+
+function getSetting<T>(name: string, defaultValue: T): T {
+	return vscode.workspace.getConfiguration("ymlbuildpipelinepreview").get<T>(name, defaultValue);
+}
 
 // this method is called when your extension is deactivated
 export function deactivate() { }
@@ -173,5 +226,19 @@ declare interface PostResult {
 	id: number; // we only need the id 
 	_links: {
 		web: { href: string }
+	}
+}
+
+declare interface PostResultError {
+	statusCode: number;
+	message: string;
+	result: {
+		$id: number,
+		errorcode: number;
+		eventId: number;
+		innerException: any;
+		message: string;
+		typeKey: "PipelineValidationException";
+		typeName: string;
 	}
 }
