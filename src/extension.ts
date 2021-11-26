@@ -39,7 +39,7 @@ export function activate(context: vscode.ExtensionContext) {
 		if (devOpsUrlStr) { devOpsUrl = new URL(devOpsUrlStr); }
 
 		if (!devOpsUrl) {
-			devOpsUrl =  getDevOpsUrlFromRepo();
+			devOpsUrl = getDevOpsUrlFromRepo();
 		}
 
 		if (!devOpsUrl) {
@@ -124,12 +124,33 @@ export function activate(context: vscode.ExtensionContext) {
 		} catch (error: any) {
 			const mappedError: PostResultError = error;
 
-			vscode.window.showErrorMessage('invoked api with an error: ' + mappedError.statusCode, mappedError.message);
-
+			//vscode.window.showErrorMessage('invoked api with an error: ' + mappedError.statusCode, mappedError.message);
+			const doc = vscode.window.activeTextEditor?.document;
 			if (mappedError.statusCode === 400) {
 
+				var test = /.*\(Line: (\d+).*, Col: (\d+).*/.exec(mappedError.message);
+				if (test?.length === 3) {
+					var line = parseInt(test[1]);
+					var col = parseInt(test[2]);
+
+					const editor = vscode.window.activeTextEditor;
+					if (editor && doc) {
+						vscode.window.showErrorMessage(`validation showed an Error at ${line}:${col}`, "Jump there").then(t => {
+							if (t === "Jump there") {
+								vscode.window.showTextDocument(doc);
+								const position = editor?.selection.active;
+								var newPosition = position?.with(line - 1, col);
+								if (newPosition) {
+									var newSelection = new vscode.Selection(newPosition, newPosition);
+									editor.selection = newSelection;
+								}
+							}
+						});
+					}
+				}
+			} else {
+				vscode.window.showErrorMessage('validation showed an Error: ' + mappedError.statusCode, mappedError.message);
 			}
-			vscode.window.showErrorMessage('invoked api with an error: ' + mappedError.statusCode, mappedError.message);
 		}
 	});
 
@@ -144,13 +165,13 @@ function getDevOpsUrlFromRepo() {
 		return;
 	}
 	const git = gitExtension.getAPI(1);
-
-	if (!vscode.window.activeTextEditor?.document.uri) {
+	const document = vscode.window.activeTextEditor?.document;
+	if (!document || !document.uri) {
 		vscode.window.showErrorMessage('sorry not able to determine the document uri ... expecting it to be in a azure devops git...');
 		return;
 	}
 
-	const repository = git.getRepository(vscode.window.activeTextEditor?.document.uri);
+	const repository = git.getRepository(document.uri);
 
 	if (!repository) {
 		vscode.window.showErrorMessage('sorry not able to determine the repository ... expecting it to be in a azure devops git...');
