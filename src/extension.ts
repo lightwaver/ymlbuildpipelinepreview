@@ -135,20 +135,24 @@ export function activate(context: vscode.ExtensionContext) {
 		let connection = new azdev.WebApi(serverUrl, authHandler);
 
 		let api = new azdev.WebApi(serverUrl, authHandler, undefined);
+		try {
 		const response = await api.rest.create<PostResult>(apiUrl, postData, undefined);
-
 		if (response.statusCode === 200) {
-			if (!response.result?.id) {
-				vscode.window.showErrorMessage('invoked api with success but got no id 😮');
+			if (response.result?.id?? 0 <= 0) {
+				vscode.window.showInformationMessage('👌 invoked api with success - Syntax seems to be ok');
 				return;
 			}
-			vscode.window.showErrorMessage('invoked api with success :P');
-			var buildRunUrl = `https://dev.azure.com/${organisation}/${project}/_build/results?buildId=${response.result.id}`;
+			vscode.window.showErrorMessage('👌 invoked api with success opening build');
+
+			var buildRunUrl = `https://dev.azure.com/${organisation}/${project}/_build/results?buildId=${response.result?.id}`;
 			vscode.env.openExternal(vscode.Uri.parse(buildRunUrl));
 		} else {
 			vscode.window.showErrorMessage('invoked api with an error: ' + response.statusCode);
 		}
-	});
+	} catch(error: any) {
+		vscode.window.showErrorMessage('invoked api with an error: ' + error.response.statusCode);
+	}
+});
 
 	context.subscriptions.push(disposable);
 }
