@@ -14,10 +14,12 @@
     ],
     "main": "./out/extension.js",
     "contributes": {
-        "commands": [{
-            "command": "ymlbuildpipelinepreview.testPipeline",
-            "title": "test YAML Pipeline in Azure Pipelines"
-        }],
+        "commands": [
+            {
+                "command": "ymlbuildpipelinepreview.testPipeline",
+                "title": "test YAML Pipeline in Azure Pipelines"
+            }
+        ],
         "configuration": {
             "title": "Azure Devops YAML Build Preview",
             "properties": {
@@ -56,7 +58,6 @@
         "typescript": "^4.4.4"
     },
     "dependencies": {
-        "axios": "^0.24.0",
         "azure-devops-node-api": "^11.1.0"
     }
 }
