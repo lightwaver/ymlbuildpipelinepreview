@@ -1,20 +1,20 @@
 # ymlbuildpipelinepreview README
 
-This is the README for your extension "ymlbuildpipelinepreview". After writing up a brief description, we recommend including the following sections.
+Yaml BuildPipeLine Preview is a small extension to check the syntax and "runabilitly" for a pipeline.
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+It adds a ability to test your current yaml - pipeline file with the preview api from azure devops to check the syntax of your file - **without need to check it in or run a real build/release**
 
-For example if there is an image subfolder under your extension project workspace:
+You just need to open up the yml file and select the command in the context menu or the commandlist
 
-\!\[feature X\]\(images/feature-x.png\)
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
 
 ## Requirements
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+You need a azure devOps project and a created pipeline in the specific project you want to run it in.
+
+Additionally the App needs an Personal Access Token to invoke the API.
 
 ## Extension Settings
 
@@ -24,12 +24,16 @@ For example:
 
 This extension contributes the following settings:
 
-* `myExtension.enable`: enable/disable this extension
-* `myExtension.thing`: set to `blah` to do something
+* `ymlbuildpipelinepreview.devOpsApiPAT`: Personal Access Token for invoking the API
+* `ymlbuildpipelinepreview.pipelineID`: Pipeline ID to be used for simulating the pipeline run
+* `ymlbuildpipelinepreview.azureDevOpsUrl`: devOps Url where your project and pipelines are hosted.
+   if hosted in an azure devops git repo the extension tries to identifiy it from there.
+
+if the settings are not set you get asked on the first run of the extension in your project.
 
 ## Known Issues
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+none so far but you are in the early stage of development 😅.
 
 ## Release Notes
 
@@ -37,34 +41,5 @@ Users appreciate release notes as you update your extension.
 
 ### 1.0.0
 
-Initial release of ...
+Initial release of it :P
 
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
-
------------------------------------------------------------------------------------------------------------
-## Following extension guidelines
-
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
-
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
-
-## Working with Markdown
-
-**Note:** You can author your README using Visual Studio Code.  Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux)
-* Toggle preview (`Shift+CMD+V` on macOS or `Shift+Ctrl+V` on Windows and Linux)
-* Press `Ctrl+Space` (Windows, Linux) or `Cmd+Space` (macOS) to see a list of Markdown snippets
-
-### For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
