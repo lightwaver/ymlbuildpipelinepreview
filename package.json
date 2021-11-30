@@ -2,7 +2,7 @@
     "name": "ymlbuildpipelinepreview",
     "displayName": "YMLBuildPipelinePreview",
     "description": "Send edited yml to Azure Pipelines for testing before checkin",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "engines": {
         "vscode": "^1.62.0"
     },
@@ -20,19 +20,25 @@
     "main": "./out/extension.js",
     "publisher": "marekworks-at",
     "contributes": {
-        "commands": [{
-            "command": "ymlbuildpipelinepreview.testPipeline",
-            "title": "test YAML Pipeline in Azure Pipelines",
-            "description": "send the current yml to devops for syntax checking..."
-        }],
-        "menus": {
-            "editor/context": [{
+        "commands": [
+            {
                 "command": "ymlbuildpipelinepreview.testPipeline",
-                "group": "z_commands"
-            }],
-            "commandPalette": [{
-                "command": "ymlbuildpipelinepreview.testPipeline"
-            }]
+                "title": "test YAML Pipeline in Azure Pipelines",
+                "description": "send the current yml to devops for syntax checking..."
+            }
+        ],
+        "menus": {
+            "editor/context": [
+                {
+                    "command": "ymlbuildpipelinepreview.testPipeline",
+                    "group": "z_commands"
+                }
+            ],
+            "commandPalette": [
+                {
+                    "command": "ymlbuildpipelinepreview.testPipeline"
+                }
+            ]
         },
         "configuration": {
             "title": "Azure Devops YAML Build Preview",
