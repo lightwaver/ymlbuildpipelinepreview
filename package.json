@@ -9,31 +9,30 @@
     "categories": [
         "Other"
     ],
+    "icon": "images/icon.png",
+    "galleryBanner": {
+        "color": "#004907",
+        "theme": "dark"
+    },
     "activationEvents": [
         "onCommand:ymlbuildpipelinepreview.testPipeline"
     ],
     "main": "./out/extension.js",
     "publisher": "marekworks-at",
     "contributes": {
-        "commands": [
-            {
-                "command": "ymlbuildpipelinepreview.testPipeline",
-                "title": "test YAML Pipeline in Azure Pipelines",
-                "description": "send the current yml to devops for syntax checking..."
-            }
-        ],
+        "commands": [{
+            "command": "ymlbuildpipelinepreview.testPipeline",
+            "title": "test YAML Pipeline in Azure Pipelines",
+            "description": "send the current yml to devops for syntax checking..."
+        }],
         "menus": {
-            "editor/context": [
-                {
-                    "command": "ymlbuildpipelinepreview.testPipeline",
-                    "group": "z_commands"
-                }
-            ],
-            "commandPalette": [
-                {
-                    "command": "ymlbuildpipelinepreview.testPipeline"
-                }
-            ]
+            "editor/context": [{
+                "command": "ymlbuildpipelinepreview.testPipeline",
+                "group": "z_commands"
+            }],
+            "commandPalette": [{
+                "command": "ymlbuildpipelinepreview.testPipeline"
+            }]
         },
         "configuration": {
             "title": "Azure Devops YAML Build Preview",
