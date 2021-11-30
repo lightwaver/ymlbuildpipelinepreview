@@ -104,9 +104,13 @@ Users appreciate release notes as you update your extension.
 ### 1.0.0
 
 Initial release of it :P
-### -> 1.0.3
+### -> 1.0.4
 
 Bundle updates and readme fixes...
+
+### 1.0.5
+
+Fix parsing DevOpsUrl...
 
 ## License
 

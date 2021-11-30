@@ -201,7 +201,7 @@ function parseDevOpsUrl(repoUrl: URL) {
 	let project: string = "";
 	if (repoUrl.hostname === "dev.azure.com") {
 		organisation = repoUrl.username;
-		project = repoUrl.pathname.substr(repoUrl.pathname.lastIndexOf("/") + 1);
+		project = repoUrl.pathname.substring(organisation.length+2, repoUrl.pathname.indexOf('/', organisation.length+2));
 	}
 	else if (repoUrl.hostname.endsWith("visualstudio.com")) {
 		organisation = repoUrl.hostname.substr(0, repoUrl.hostname.indexOf("."));
