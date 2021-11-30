@@ -2,7 +2,7 @@
     "name": "ymlbuildpipelinepreview",
     "displayName": "YMLBuildPipelinePreview",
     "description": "Send edited yml to Azure Pipelines for testing before checkin",
-    "version": "1.0.3",
+    "version": "1.0.4",
     "engines": {
         "vscode": "^1.62.0"
     },
