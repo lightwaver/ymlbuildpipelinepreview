@@ -104,6 +104,9 @@ Users appreciate release notes as you update your extension.
 ### 1.0.0
 
 Initial release of it :P
+### -> 1.0.3
+
+Bundle updates and readme fixes...
 
 ## License
 
