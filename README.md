@@ -70,11 +70,11 @@ next the extension tries to get the yml content from the editor and send it to t
 
 if the response indicates success - the simulation was successful - you get the message
 
-![success](images/success.png)
+* ![success](images/success.png)
 
 if not you will get for example the following message:
 
-![success](images/error.png)
+* ![success](images/error.png)
 
 in this example the error is at Line 26 - position 1 - with clicking the button "Jump there" the cursor gets set to the specific position.
 
@@ -105,3 +105,6 @@ Users appreciate release notes as you update your extension.
 
 Initial release of it :P
 
+## License
+
+it is published under MIT License.
