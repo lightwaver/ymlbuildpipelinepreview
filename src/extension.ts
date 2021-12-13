@@ -196,7 +196,7 @@ function getDevOpsUrlFromRepo() {
 	return repoUrl;
 }
 
-function parseDevOpsUrl(repoUrl: URL) {
+export function parseDevOpsUrl(repoUrl: URL) {
 	let organisation: string = "";
 	let project: string = "";
 	if (repoUrl.hostname === "dev.azure.com") {

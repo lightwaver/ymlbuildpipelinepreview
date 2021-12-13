@@ -112,6 +112,10 @@ Bundle updates and readme fixes...
 
 Fix parsing DevOpsUrl...
 
+### 1.0.6
+
+Fix in menu definition...
+
 ## License
 
 it is published under MIT License.
